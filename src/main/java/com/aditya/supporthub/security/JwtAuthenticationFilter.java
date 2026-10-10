@@ -76,6 +76,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String email = claims.getSubject();
             String role = claims.get("role", String.class);
+            
+            System.out.println("JWT EMAIL: " + email);
+            System.out.println("JWT ROLE: " + role);
 
             if (email == null || email.isBlank()
                     || role == null || role.isBlank()) {

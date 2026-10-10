@@ -1,0 +1,113 @@
+package com.aditya.supporthub.controller;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import com.aditya.supporthub.dto.CreateTicketRequest;
+import com.aditya.supporthub.dto.UpdateTicketStatusRequest;
+import com.aditya.supporthub.dto.UpdateTicketPriorityRequest;
+import com.aditya.supporthub.entity.Ticket;
+import com.aditya.supporthub.service.TicketService;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/tickets")
+public class TicketController {
+
+    private final TicketService ticketService;
+
+    public TicketController(TicketService ticketService) {
+        this.ticketService = ticketService;
+    }
+
+    // Create a new ticket
+    @PostMapping
+    public ResponseEntity<Ticket> createTicket(
+            @Valid @RequestBody CreateTicketRequest request,
+            Authentication authentication) {
+
+        String userEmail = authentication.getName();
+
+        Ticket ticket = ticketService.createTicket(
+                request.getTitle(),
+                request.getDescription(),
+                request.getCategory(),
+                userEmail
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ticket);
+    }
+
+    // Get tickets created by the logged-in user
+    @GetMapping("/my")
+    public ResponseEntity<List<Ticket>> getMyTickets(
+            Authentication authentication) {
+
+        String userEmail = authentication.getName();
+
+        return ResponseEntity.ok(
+                ticketService.getMyTickets(userEmail)
+        );
+    }
+
+    // Get all tickets - AGENT and ADMIN only
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
+    @GetMapping
+    public ResponseEntity<List<Ticket>> getAllTickets() {
+
+        return ResponseEntity.ok(
+                ticketService.getAllTickets()
+        );
+    }
+
+    // Get a ticket by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Ticket> getTicketById(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        String userEmail = authentication.getName();
+
+        return ResponseEntity.ok(
+                ticketService.getTicketById(id, userEmail)
+        );
+    }
+
+    // Update ticket status - AGENT and ADMIN only
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Ticket> updateTicketStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTicketStatusRequest request) {
+
+        Ticket updatedTicket = ticketService.updateTicketStatus(
+                id,
+                request.getStatus()
+        );
+
+        return ResponseEntity.ok(updatedTicket);
+    }
+
+    // Update ticket priority - AGENT and ADMIN only
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
+    @PatchMapping("/{id}/priority")
+    public ResponseEntity<Ticket> updateTicketPriority(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTicketPriorityRequest request) {
+
+        Ticket updatedTicket = ticketService.updateTicketPriority(
+                id,
+                request.getPriority()
+        );
+
+        return ResponseEntity.ok(updatedTicket);
+    }
+}

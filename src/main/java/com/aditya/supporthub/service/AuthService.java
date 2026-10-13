@@ -9,6 +9,7 @@ import com.aditya.supporthub.security.JwtService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -27,10 +28,9 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    // Register user
+    // Register a new user
     public User registerUser(RegisterRequest request) {
 
-        // Check whether email is already registered
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already registered");
         }
@@ -45,16 +45,15 @@ public class AuthService {
                 passwordEncoder.encode(request.getPassword())
         );
 
-        // Assign default role
+        // Assign the default role
         user.setRole(Role.CUSTOMER);
 
         return userRepository.save(user);
     }
 
-    // Login user
+    // Login an existing user
     public String loginUser(LoginRequest request) {
 
-        // Find user by email
         User user = userRepository
                 .findByEmail(request.getEmail())
                 .orElseThrow(() ->
@@ -74,4 +73,28 @@ public class AuthService {
         // Generate JWT token
         return jwtService.generateToken(user);
     }
-}
+
+    // Reset password for an existing user
+    @Transactional
+    public void resetUserPassword(String email, String newPassword) {
+
+        if (newPassword == null || newPassword.length() < 12) {
+            throw new IllegalArgumentException(
+                    "Password must contain at least 12 characters"
+            );
+        }
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        // Encode the new password using BCrypt
+        user.setPassword(
+                passwordEncoder.encode(newPassword)
+        );
+
+        userRepository.save(user);
+    }
+} 

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -19,13 +17,12 @@
     <groupId>com.aditya.supporthub</groupId>
     <artifactId>SupportHub</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-
     <name>SupportHub</name>
     <description>
         AI-powered customer support and ticket automation platform
     </description>
 
-    <!-- Java -->
+    <!-- Java Configuration -->
     <properties>
         <java.version>21</java.version>
     </properties>
@@ -71,8 +68,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ==================== JWT ==================== -->
-
         <!-- JWT API -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -96,7 +91,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ==================== TESTING ==================== -->
+        <!-- Swagger / OpenAPI Documentation -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.1</version>
+        </dependency>
 
         <!-- JPA Tests -->
         <dependency>
@@ -130,7 +130,6 @@
 
     <!-- Build Configuration -->
     <build>
-
         <plugins>
 
             <!-- Spring Boot Maven Plugin -->
@@ -145,16 +144,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
 
                 <executions>
-
                     <!-- Compile -->
                     <execution>
                         <id>default-compile</id>
                         <phase>compile</phase>
-
                         <goals>
                             <goal>compile</goal>
                         </goals>
-
                         <configuration>
                             <annotationProcessorPaths>
                                 <path>
@@ -169,11 +165,9 @@
                     <execution>
                         <id>default-testCompile</id>
                         <phase>test-compile</phase>
-
                         <goals>
                             <goal>testCompile</goal>
                         </goals>
-
                         <configuration>
                             <annotationProcessorPaths>
                                 <path>
@@ -183,12 +177,10 @@
                             </annotationProcessorPaths>
                         </configuration>
                     </execution>
-
                 </executions>
             </plugin>
 
         </plugins>
-
     </build>
 
 </project>

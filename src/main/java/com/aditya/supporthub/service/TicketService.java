@@ -41,8 +41,7 @@ public class TicketService {
         // Find the logged-in user
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User not found"));
+                        new ResourceNotFoundException("User not found"));
 
         // Create the ticket
         Ticket ticket = new Ticket();
@@ -55,30 +54,30 @@ public class TicketService {
         ticket.setStatus(TicketStatus.OPEN);
         ticket.setPriority(TicketPriority.MEDIUM);
 
-        // Set creation and update timestamps
+        // Set timestamps
         LocalDateTime now = LocalDateTime.now();
 
         ticket.setCreatedAt(now);
         ticket.setUpdatedAt(now);
 
-        // Assign the logged-in user as creator
+        // Set ticket creator
         ticket.setCreatedBy(user);
 
-        // Save and return the ticket
+        // New tickets remain unassigned until an Admin assigns them
+        ticket.setAssignedTo(null);
+
         return ticketRepository.save(ticket);
     }
 
     // Get all tickets
     @Transactional(readOnly = true)
     public List<Ticket> getAllTickets() {
-
         return ticketRepository.findAll();
     }
 
     // Get tickets created by the logged-in user
     @Transactional(readOnly = true)
     public List<Ticket> getMyTickets(String userEmail) {
-
         return ticketRepository.findByCreatedByEmail(userEmail);
     }
 
@@ -86,27 +85,22 @@ public class TicketService {
     @Transactional(readOnly = true)
     public Ticket getTicketById(Long id, String userEmail) {
 
-        // Find the ticket
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Ticket not found with id: " + id));
 
-        // Validate the authenticated user's email
         if (userEmail == null || userEmail.isBlank()) {
             throw new ForbiddenException(
                     "You are not allowed to access this ticket");
         }
 
-        // Find the authenticated user
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User not found"));
+                        new ResourceNotFoundException("User not found"));
 
-        // Allow Admins and Agents to access any ticket
+        // Admins and Agents can access any ticket
         if (user.getRole() != null) {
-
             String role = user.getRole().name();
 
             if ("ADMIN".equals(role) || "AGENT".equals(role)) {
@@ -114,16 +108,14 @@ public class TicketService {
             }
         }
 
-        // Check whether the ticket has a creator
+        // Customers can access only their own tickets
         if (ticket.getCreatedBy() == null) {
             throw new ForbiddenException(
                     "This ticket has no assigned creator");
         }
 
-        // Get the ticket creator's email
         String creatorEmail = ticket.getCreatedBy().getEmail();
 
-        // Customers can access only their own tickets
         if (creatorEmail == null
                 || !creatorEmail.equalsIgnoreCase(userEmail)) {
 
@@ -131,7 +123,6 @@ public class TicketService {
                     "You are not allowed to access this ticket");
         }
 
-        // Return the authorized ticket
         return ticket;
     }
 
@@ -141,17 +132,14 @@ public class TicketService {
             Long id,
             TicketStatus status) {
 
-        // Find the ticket
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Ticket not found with id: " + id));
 
-        // Update status
         ticket.setStatus(status);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        // Save and return the updated ticket
         return ticketRepository.save(ticket);
     }
 
@@ -161,17 +149,73 @@ public class TicketService {
             Long id,
             TicketPriority priority) {
 
-        // Find the ticket
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Ticket not found with id: " + id));
 
-        // Update priority
         ticket.setPriority(priority);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        // Save and return the updated ticket
         return ticketRepository.save(ticket);
+    }
+
+    // Assign a ticket to an Agent
+    @Transactional
+    public Ticket assignTicketToAgent(
+            Long ticketId,
+            Long agentId) {
+
+        // Find the ticket
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Ticket not found with id: " + ticketId));
+
+        // Find the Agent
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id: " + agentId));
+
+        // Only users with the AGENT role can be assigned tickets
+        if (agent.getRole() == null
+                || !"AGENT".equals(agent.getRole().name())) {
+
+            throw new IllegalArgumentException(
+                    "The selected user is not an Agent");
+        }
+
+        // Assign the Agent
+        ticket.setAssignedTo(agent);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        return ticketRepository.save(ticket);
+    }
+
+    // Get tickets assigned to a specific Agent
+    @Transactional(readOnly = true)
+    public List<Ticket> getAssignedTickets(String agentEmail) {
+
+        // Find the Agent
+        User agent = userRepository.findByEmail(agentEmail)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Agent not found"));
+
+        // Verify Agent role
+        if (agent.getRole() == null
+                || !"AGENT".equals(agent.getRole().name())) {
+
+            throw new ForbiddenException(
+                    "Only Agents can view their assigned tickets");
+        }
+
+        return ticketRepository.findByAssignedToEmail(agentEmail);
+    }
+
+    // Get all unassigned tickets
+    @Transactional(readOnly = true)
+    public List<Ticket> getUnassignedTickets() {
+        return ticketRepository.findByAssignedToIsNull();
     }
 }

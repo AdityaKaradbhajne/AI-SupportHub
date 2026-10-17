@@ -1,18 +1,20 @@
 package com.aditya.supporthub.entity;
 
 import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "tickets")
@@ -21,11 +23,17 @@ public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    // User who created the ticket
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    // Agent assigned to handle the ticket
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
 
     @Column(nullable = false)
     private String title;
@@ -57,9 +65,11 @@ public class Ticket {
     @Column
     private LocalDateTime updatedAt;
 
+    // Default constructor
     public Ticket() {
     }
 
+    // Parameterized constructor
     public Ticket(
             String title,
             String description,
@@ -76,6 +86,7 @@ public class Ticket {
         this.createdAt = createdAt;
     }
 
+    // ID
     public Long getId() {
         return id;
     }
@@ -84,70 +95,7 @@ public class Ticket {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public TicketStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TicketStatus status) {
-        this.status = status;
-    }
-
-    public TicketPriority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(TicketPriority priority) {
-        this.priority = priority;
-    }
-
-    public TicketCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(TicketCategory category) {
-        this.category = category;
-    }
-
-    public String getAiSuggestedResponse() {
-        return aiSuggestedResponse;
-    }
-
-    public void setAiSuggestedResponse(String aiSuggestedResponse) {
-        this.aiSuggestedResponse = aiSuggestedResponse;
-    }
-
-    public Double getAiConfidence() {
-        return aiConfidence;
-    }
-
-    public void setAiConfidence(Double aiConfidence) {
-        this.aiConfidence = aiConfidence;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
+    // Created By
     public User getCreatedBy() {
         return createdBy;
     }
@@ -156,6 +104,88 @@ public class Ticket {
         this.createdBy = createdBy;
     }
 
+    // Assigned To
+    public User getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(User assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
+    // Title
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    // Description
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    // Status
+    public TicketStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+    }
+
+    // Priority
+    public TicketPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TicketPriority priority) {
+        this.priority = priority;
+    }
+
+    // Category
+    public TicketCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TicketCategory category) {
+        this.category = category;
+    }
+
+    // AI Suggested Response
+    public String getAiSuggestedResponse() {
+        return aiSuggestedResponse;
+    }
+
+    public void setAiSuggestedResponse(String aiSuggestedResponse) {
+        this.aiSuggestedResponse = aiSuggestedResponse;
+    }
+
+    // AI Confidence
+    public Double getAiConfidence() {
+        return aiConfidence;
+    }
+
+    public void setAiConfidence(Double aiConfidence) {
+        this.aiConfidence = aiConfidence;
+    }
+
+    // Created At
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // Updated At
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }

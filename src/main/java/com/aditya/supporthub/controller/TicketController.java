@@ -68,6 +68,44 @@ public class TicketController {
         );
     }
 
+    // Get tickets assigned to the logged-in Agent
+    @PreAuthorize("hasRole('AGENT')")
+    @GetMapping("/assigned")
+    public ResponseEntity<List<Ticket>> getAssignedTickets(
+            Authentication authentication) {
+
+        String agentEmail = authentication.getName();
+
+        return ResponseEntity.ok(
+                ticketService.getAssignedTickets(agentEmail)
+        );
+    }
+
+    // Get all unassigned tickets - ADMIN only
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/unassigned")
+    public ResponseEntity<List<Ticket>> getUnassignedTickets() {
+
+        return ResponseEntity.ok(
+                ticketService.getUnassignedTickets()
+        );
+    }
+
+    // Assign a ticket to an Agent - ADMIN only
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/assign/{agentId}")
+    public ResponseEntity<Ticket> assignTicketToAgent(
+            @PathVariable Long id,
+            @PathVariable Long agentId) {
+
+        Ticket assignedTicket = ticketService.assignTicketToAgent(
+                id,
+                agentId
+        );
+
+        return ResponseEntity.ok(assignedTicket);
+    }
+
     // Get a ticket by ID
     @GetMapping("/{id}")
     public ResponseEntity<Ticket> getTicketById(

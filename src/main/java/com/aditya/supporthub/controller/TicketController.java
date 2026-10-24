@@ -9,9 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.aditya.supporthub.dto.CreateTicketRequest;
-import com.aditya.supporthub.dto.UpdateTicketStatusRequest;
+import com.aditya.supporthub.dto.TicketResponse;
 import com.aditya.supporthub.dto.UpdateTicketPriorityRequest;
-import com.aditya.supporthub.entity.Ticket;
+import com.aditya.supporthub.dto.UpdateTicketStatusRequest;
 import com.aditya.supporthub.service.TicketService;
 
 import jakarta.validation.Valid;
@@ -28,13 +28,13 @@ public class TicketController {
 
     // Create a new ticket
     @PostMapping
-    public ResponseEntity<Ticket> createTicket(
+    public ResponseEntity<TicketResponse> createTicket(
             @Valid @RequestBody CreateTicketRequest request,
             Authentication authentication) {
 
         String userEmail = authentication.getName();
 
-        Ticket ticket = ticketService.createTicket(
+        TicketResponse ticket = ticketService.createTicket(
                 request.getTitle(),
                 request.getDescription(),
                 request.getCategory(),
@@ -48,7 +48,7 @@ public class TicketController {
 
     // Get tickets created by the logged-in user
     @GetMapping("/my")
-    public ResponseEntity<List<Ticket>> getMyTickets(
+    public ResponseEntity<List<TicketResponse>> getMyTickets(
             Authentication authentication) {
 
         String userEmail = authentication.getName();
@@ -61,8 +61,7 @@ public class TicketController {
     // Get all tickets - AGENT and ADMIN only
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @GetMapping
-    public ResponseEntity<List<Ticket>> getAllTickets() {
-
+    public ResponseEntity<List<TicketResponse>> getAllTickets() {
         return ResponseEntity.ok(
                 ticketService.getAllTickets()
         );
@@ -71,7 +70,7 @@ public class TicketController {
     // Get tickets assigned to the logged-in Agent
     @PreAuthorize("hasRole('AGENT')")
     @GetMapping("/assigned")
-    public ResponseEntity<List<Ticket>> getAssignedTickets(
+    public ResponseEntity<List<TicketResponse>> getAssignedTickets(
             Authentication authentication) {
 
         String agentEmail = authentication.getName();
@@ -84,8 +83,7 @@ public class TicketController {
     // Get all unassigned tickets - ADMIN only
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/unassigned")
-    public ResponseEntity<List<Ticket>> getUnassignedTickets() {
-
+    public ResponseEntity<List<TicketResponse>> getUnassignedTickets() {
         return ResponseEntity.ok(
                 ticketService.getUnassignedTickets()
         );
@@ -94,11 +92,11 @@ public class TicketController {
     // Assign a ticket to an Agent - ADMIN only
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/assign/{agentId}")
-    public ResponseEntity<Ticket> assignTicketToAgent(
+    public ResponseEntity<TicketResponse> assignTicketToAgent(
             @PathVariable Long id,
             @PathVariable Long agentId) {
 
-        Ticket assignedTicket = ticketService.assignTicketToAgent(
+        TicketResponse assignedTicket = ticketService.assignTicketToAgent(
                 id,
                 agentId
         );
@@ -108,7 +106,7 @@ public class TicketController {
 
     // Get a ticket by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Ticket> getTicketById(
+    public ResponseEntity<TicketResponse> getTicketById(
             @PathVariable Long id,
             Authentication authentication) {
 
@@ -122,11 +120,11 @@ public class TicketController {
     // Update ticket status - AGENT and ADMIN only
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Ticket> updateTicketStatus(
+    public ResponseEntity<TicketResponse> updateTicketStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateTicketStatusRequest request) {
 
-        Ticket updatedTicket = ticketService.updateTicketStatus(
+        TicketResponse updatedTicket = ticketService.updateTicketStatus(
                 id,
                 request.getStatus()
         );
@@ -137,15 +135,28 @@ public class TicketController {
     // Update ticket priority - AGENT and ADMIN only
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @PatchMapping("/{id}/priority")
-    public ResponseEntity<Ticket> updateTicketPriority(
+    public ResponseEntity<TicketResponse> updateTicketPriority(
             @PathVariable Long id,
             @Valid @RequestBody UpdateTicketPriorityRequest request) {
 
-        Ticket updatedTicket = ticketService.updateTicketPriority(
+        TicketResponse updatedTicket = ticketService.updateTicketPriority(
                 id,
                 request.getPriority()
         );
 
         return ResponseEntity.ok(updatedTicket);
     }
+    
+    // Delete a ticket - ADMIN only
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTicket(
+            @PathVariable Long id) {
+
+        ticketService.deleteTicket(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
+

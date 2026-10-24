@@ -2,7 +2,7 @@ package com.aditya.supporthub.exception;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import org.springframework.security.access.AccessDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -151,5 +151,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
+    }
+    
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDeniedException(
+            AccessDeniedException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ex.getMessage());
     }
 }

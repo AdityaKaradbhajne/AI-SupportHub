@@ -18,7 +18,14 @@ public interface TicketCommentRepository
     List<TicketComment> findByTicketIdOrderByCreatedAtAsc(Long ticketId);
 
     // Find replies to a specific comment
-    List<TicketComment> findByParentCommentIdOrderByCreatedAtAsc(Long parentCommentId);
+    List<TicketComment> findByParentCommentIdOrderByCreatedAtAsc(
+            Long parentCommentId);
+
+    // Delete all replies associated with a parent comment
+    @Modifying
+    @Query("DELETE FROM TicketComment c WHERE c.parentComment.id = :parentCommentId")
+    void deleteRepliesByParentCommentId(
+            @Param("parentCommentId") Long parentCommentId);
 
     // Delete all comments associated with a ticket
     @Modifying

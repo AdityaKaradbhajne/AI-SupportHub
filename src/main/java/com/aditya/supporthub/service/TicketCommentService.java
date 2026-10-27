@@ -1,7 +1,10 @@
 package com.aditya.supporthub.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -42,14 +45,8 @@ public class TicketCommentService {
 
         validateContent(content);
 
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Ticket not found with id: " + ticketId));
-
-        User author = userRepository.findByEmail(userEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found"));
+        Ticket ticket = getTicket(ticketId);
+        User author = getUser(userEmail);
 
         checkTicketAccess(ticket, author);
 
@@ -64,7 +61,7 @@ public class TicketCommentService {
         return TicketCommentResponse.fromEntity(savedComment);
     }
 
-    // Reply to an existing comment
+    // Reply to an existing top-level comment
     @Transactional
     public TicketCommentResponse replyToComment(
             Long ticketId,
@@ -74,31 +71,19 @@ public class TicketCommentService {
 
         validateContent(content);
 
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Ticket not found with id: " + ticketId));
+        Ticket ticket = getTicket(ticketId);
+        User author = getUser(userEmail);
 
-        User author = userRepository.findByEmail(userEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found"));
-
-        // Verify the user can access this ticket
         checkTicketAccess(ticket, author);
 
-        TicketComment parentComment = commentRepository.findById(parentCommentId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Comment not found with id: " + parentCommentId));
+        TicketComment parentComment = getComment(parentCommentId);
 
-        // A reply must belong to the same ticket
         if (parentComment.getTicket() == null
                 || !parentComment.getTicket().getId().equals(ticketId)) {
             throw new IllegalArgumentException(
                     "The parent comment does not belong to this ticket");
         }
 
-        // Keep replies to top-level comments only
         if (parentComment.getParentComment() != null) {
             throw new IllegalArgumentException(
                     "Replies to replies are not supported");
@@ -116,28 +101,148 @@ public class TicketCommentService {
         return TicketCommentResponse.fromEntity(savedReply);
     }
 
-    // Retrieve all comments and replies for a ticket
+    // Retrieve comments with replies nested under their parent comments
     @Transactional(readOnly = true)
     public List<TicketCommentResponse> getCommentsByTicketId(
             Long ticketId,
             String userEmail) {
 
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Ticket not found with id: " + ticketId));
-
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found"));
+        Ticket ticket = getTicket(ticketId);
+        User user = getUser(userEmail);
 
         checkTicketAccess(ticket, user);
 
-        return commentRepository
-                .findByTicketIdOrderByCreatedAtAsc(ticketId)
-                .stream()
-                .map(TicketCommentResponse::fromEntity)
-                .toList();
+        List<TicketComment> allComments =
+                commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId);
+
+        Map<Long, TicketCommentResponse> responseMap = new LinkedHashMap<>();
+
+        for (TicketComment comment : allComments) {
+            responseMap.put(
+                    comment.getId(),
+                    TicketCommentResponse.fromEntity(comment));
+        }
+
+        List<TicketCommentResponse> topLevelComments = new ArrayList<>();
+
+        for (TicketComment comment : allComments) {
+
+            TicketCommentResponse currentResponse =
+                    responseMap.get(comment.getId());
+
+            if (comment.getParentComment() == null) {
+                topLevelComments.add(currentResponse);
+            } else {
+                Long parentId = comment.getParentComment().getId();
+
+                TicketCommentResponse parentResponse = responseMap.get(parentId);
+
+                if (parentResponse != null) {
+                    parentResponse.getReplies().add(currentResponse);
+                }
+            }
+        }
+
+        return topLevelComments;
+    }
+
+    // Edit an existing comment
+    @Transactional
+    public TicketCommentResponse updateComment(
+            Long ticketId,
+            Long commentId,
+            String content,
+            String userEmail) {
+
+        validateContent(content);
+
+        Ticket ticket = getTicket(ticketId);
+        User user = getUser(userEmail);
+
+        checkTicketAccess(ticket, user);
+
+        TicketComment comment = getComment(commentId);
+
+        validateCommentBelongsToTicket(comment, ticketId);
+        checkCommentModificationPermission(comment, user);
+
+        comment.setContent(content.trim());
+        comment.setUpdatedAt(LocalDateTime.now());
+
+        TicketComment updatedComment = commentRepository.save(comment);
+
+        return TicketCommentResponse.fromEntity(updatedComment);
+    }
+
+    // Delete a comment and its replies
+    @Transactional
+    public void deleteComment(
+            Long ticketId,
+            Long commentId,
+            String userEmail) {
+
+        Ticket ticket = getTicket(ticketId);
+        User user = getUser(userEmail);
+
+        checkTicketAccess(ticket, user);
+
+        TicketComment comment = getComment(commentId);
+
+        validateCommentBelongsToTicket(comment, ticketId);
+        checkCommentModificationPermission(comment, user);
+
+        // Delete replies first to avoid a foreign-key constraint violation
+        commentRepository.deleteRepliesByParentCommentId(commentId);
+
+        // Delete the selected comment
+        commentRepository.delete(comment);
+    }
+
+    // Validate that the current user can edit or delete this comment
+    private void checkCommentModificationPermission(
+            TicketComment comment,
+            User user) {
+
+        if ("ADMIN".equals(user.getRole().name())) {
+            return;
+        }
+
+        if (comment.getAuthor() == null
+                || !comment.getAuthor().getId().equals(user.getId())) {
+            throw new AccessDeniedException(
+                    "You can only edit or delete your own comments");
+        }
+    }
+
+    private void validateCommentBelongsToTicket(
+            TicketComment comment,
+            Long ticketId) {
+
+        if (comment.getTicket() == null
+                || !comment.getTicket().getId().equals(ticketId)) {
+            throw new IllegalArgumentException(
+                    "The comment does not belong to this ticket");
+        }
+    }
+
+    private Ticket getTicket(Long ticketId) {
+        return ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Ticket not found with id: " + ticketId));
+    }
+
+    private User getUser(String userEmail) {
+        return userRepository.findByEmail(userEmail)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+    }
+
+    private TicketComment getComment(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Comment not found with id: " + commentId));
     }
 
     private void validateContent(String content) {

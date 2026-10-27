@@ -109,5 +109,10 @@ public class TicketComment {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+	public void setUpdatedAt(LocalDateTime now) {
+		// TODO Auto-generated method stub
+		
+	}
 }
 

@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,9 +41,7 @@ public class TicketCommentController {
                 request.getContent(),
                 userEmail);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // Reply to an existing comment
@@ -60,9 +60,7 @@ public class TicketCommentController {
                 request.getContent(),
                 userEmail);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // Get all comments and replies for a ticket
@@ -74,14 +72,45 @@ public class TicketCommentController {
         String userEmail = authentication.getName();
 
         List<TicketCommentResponse> comments =
-                commentService.getCommentsByTicketId(
-                        ticketId,
-                        userEmail);
+                commentService.getCommentsByTicketId(ticketId, userEmail);
 
         return ResponseEntity.ok(comments);
     }
 
-    // Request body for creating a comment or reply
+    // Edit an existing comment
+    @PutMapping("/{commentId}")
+    public ResponseEntity<TicketCommentResponse> updateComment(
+            @PathVariable Long ticketId,
+            @PathVariable Long commentId,
+            @RequestBody CommentRequest request,
+            Authentication authentication) {
+
+        String userEmail = authentication.getName();
+
+        TicketCommentResponse response = commentService.updateComment(
+                ticketId,
+                commentId,
+                request.getContent(),
+                userEmail);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Delete a comment and its replies
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long ticketId,
+            @PathVariable Long commentId,
+            Authentication authentication) {
+
+        String userEmail = authentication.getName();
+
+        commentService.deleteComment(ticketId, commentId, userEmail);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // Request body for creating, replying to, or editing a comment
     public static class CommentRequest {
 
         private String content;
@@ -98,3 +127,4 @@ public class TicketCommentController {
         }
     }
 }
+

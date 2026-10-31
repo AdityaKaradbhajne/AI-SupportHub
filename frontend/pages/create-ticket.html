@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>Create New Ticket | SupportHub</title>
+
+<link rel="stylesheet" href="../css/dashboard.css">
+<link rel="stylesheet" href="../css/create-ticket.css">
+
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>Support<span>Hub</span></h2>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="customer-dashboard.html" class="nav-link">
+                Overview
+            </a>
+
+            <a href="customer-dashboard.html" class="nav-link">
+                My Tickets
+            </a>
+
+            <a href="create-ticket.html" class="nav-link active">
+                Create Ticket
+            </a>
+
+            <a href="#" class="nav-link">
+                Profile
+            </a>
+
+        </nav>
+
+        <button id="logoutButton" class="logout-button">
+            Logout
+        </button>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="dashboard-header">
+
+            <div>
+                <h1>Create New Ticket</h1>
+
+                <p>
+                    Submit your issue and our support team will assist you.
+                </p>
+            </div>
+
+        </header>
+
+        <!-- Ticket Form -->
+        <section class="create-ticket-section">
+
+            <div class="form-heading">
+
+                <h2>Ticket Information</h2>
+
+                <p>
+                    Please provide accurate information about your issue.
+                </p>
+
+            </div>
+
+            <form id="createTicketForm">
+
+                <!-- Ticket Title -->
+                <div class="form-group">
+
+                    <label for="title">Ticket Title *</label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Enter your issue title"
+                        minlength="3"
+                        maxlength="150"
+                        required>
+
+                </div>
+
+                <!-- Category -->
+                <div class="form-group">
+
+                    <label for="category">Category *</label>
+
+                   <div class="form-group">
+
+
+<label for="category">Category *</label>
+
+<select id="category" name="category" required>
+
+    <option value="">Select Category</option>
+    <option value="TECHNICAL">Technical Support</option>
+    <option value="BILLING">Billing & Payments</option>
+    <option value="ACCOUNT">Account Issues</option>
+    <option value="GENERAL">General Inquiry</option>
+
+</select>
+
+</div>
+
+
+                </div>
+
+                <!-- Priority -->
+                <div class="form-group">
+
+                    <label for="priority">Priority *</label>
+
+                    <select id="priority" name="priority" required>
+
+                        <option value="">Select Priority</option>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+
+                    </select>
+
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+
+                    <label for="description">Description *</label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="6"
+                        placeholder="Describe your issue in detail..."
+                        minlength="10"
+                        maxlength="2000"
+                        required></textarea>
+
+                </div>
+
+                <!-- Message -->
+                <div id="formMessage" class="form-message"></div>
+
+                <!-- Buttons -->
+                <div class="form-buttons">
+
+                    <button
+                        type="button"
+                        class="cancel-button"
+                        id="cancelButton">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="submit-button"
+                        id="submitButton">
+
+                        Submit Ticket
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/create-ticket.js"></script>
+
+
+</body>
+
+</html>

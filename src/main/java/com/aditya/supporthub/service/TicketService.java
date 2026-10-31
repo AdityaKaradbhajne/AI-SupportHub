@@ -47,19 +47,22 @@ public TicketResponse createTicket(
         String title,
         String description,
         TicketCategory category,
+        TicketPriority priority,
         String userEmail) {
 
+    // Find logged-in customer
     User user = userRepository.findByEmail(userEmail)
             .orElseThrow(() ->
                     new ResourceNotFoundException("User not found"));
 
+    // Create new ticket
     Ticket ticket = new Ticket();
 
     ticket.setTitle(title);
     ticket.setDescription(description);
     ticket.setCategory(category);
+    ticket.setPriority(priority);
     ticket.setStatus(TicketStatus.OPEN);
-    ticket.setPriority(TicketPriority.MEDIUM);
 
     LocalDateTime now = LocalDateTime.now();
 
@@ -68,9 +71,10 @@ public TicketResponse createTicket(
     ticket.setCreatedBy(user);
     ticket.setAssignedTo(null);
 
+    // Save ticket in database
     Ticket savedTicket = ticketRepository.save(ticket);
 
-    // Record ticket creation
+    // Record ticket creation in history
     ticketHistoryService.recordHistory(
             savedTicket,
             user,
@@ -294,6 +298,5 @@ public void deleteTicket(Long id) {
     // Delete the ticket
     ticketRepository.delete(ticket);
 }
-
 
 }

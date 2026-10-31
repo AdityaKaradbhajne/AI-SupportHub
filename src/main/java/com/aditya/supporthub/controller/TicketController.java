@@ -20,7 +20,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tickets")
 public class TicketController {
 
-
 private final TicketService ticketService;
 
 public TicketController(TicketService ticketService) {
@@ -47,7 +46,7 @@ public ResponseEntity<TicketResponse> createTicket(
             .body(ticket);
 }
 
-// Get tickets created by the logged-in user
+// Get tickets created by the logged-in customer
 @GetMapping("/my")
 public ResponseEntity<List<TicketResponse>> getMyTickets(
         Authentication authentication) {
